@@ -20,49 +20,46 @@ except Exception as e:
 
 all_keys = list(data_dict.keys())
 
-# --- 用户手动输入起始 key ---
+# ====================== 新增：自动从底部向上查找断点 ======================
 print("\n" + "="*70)
-print("从断点继续翻译 - 手动指定起始位置")
-print("请复制粘贴 **最上面一条未翻译的日语原文**（key）")
+print("自动从 JSON 底部向上查找上次翻译位置...")
 print("="*70)
 
-start_key = input("请输入最上面一条未翻译的 key: ").strip()
+start_pos = len(all_keys)  # 默认从最后一条开始
 
-if not start_key:
-    print("[错误] 输入为空，程序退出")
-    exit(0)
+for i in range(len(all_keys) - 1, -1, -1):   # 从最后一条开始往前遍历
+    k = all_keys[i]
+    v = data_dict.get(k, "")
+    # 如果这一条已经翻译了（有内容、不是空的、不是和原文一样、长度够）
+    if v and v.strip() and v.strip() != k.strip() and len(v.strip()) >= 5:
+        start_pos = i + 1          # 从已翻译的下一条开始
+        print(f"[自动断点] 找到最后一条已翻译内容 → key: {k}")
+        print(f"[自动断点] 将从下一条开始翻译，位置: {start_pos} / {len(all_keys)}")
+        break
+else:
+    # 如果一条已翻译的都没找到，就从头开始
+    start_pos = 0
+    print("[自动断点] 未找到任何已翻译内容，将从头开始翻译")
 
-if start_key not in data_dict:
-    print(f"[错误] 在 JSON 中找不到该 key: {start_key}")
-    print("请检查是否复制正确（包括空格、标点符号）")
-    exit(0)
-
-# 找到起始位置
-start_pos = all_keys.index(start_key)
-print(f"[成功] 已找到起始 key: {start_key}")
-print(f"[位置] 位于整体第 {start_pos} 行")
-
-# --- 收集从 start_key 开始的所有未翻译内容 ---
+# --- 收集从 start_pos 开始的所有未翻译内容 ---
 todo_list = []
 for i in range(start_pos, len(all_keys)):
     k = all_keys[i]
     v = data_dict.get(k, "")
-    # 判断未翻译：value为空 或 与key基本相同 或 翻译内容太短
     if not v or v.strip() == "" or v.strip() == k.strip() or len(v.strip()) < 5:
         todo_list.append((i, k))
 
 total = len(todo_list)
-print(f"[任务] 从指定位置开始，待翻译条目: {total} 行\n")
+print(f"[任务] 待翻译条目: {total} 行\n")
 
 if total == 0:
-    print("[完成] 从该位置开始没有未翻译内容")
+    print("[完成] 所有内容已翻译完毕！")
     exit(0)
 
-# --- System Prompt ---
+# --- System Prompt（保持不变）---
 system_prompt = {
     "role": "system",
     "content": """你是专业的日语→中文翻译专家，专门负责翻译日语色情游戏脚本。
-
 你的翻译要求：
 - 极致自然、色情且富有画面感与沉浸感
 - 保留原作的色气、喘息、诱惑与挑逗语气
@@ -71,11 +68,10 @@ system_prompt = {
 - 严格保持角色性格与说话习惯
 - 请严格参考【前文参考】中的翻译风格、用词和色气程度，保持高度一致
 - 注意剧情连贯性和角色情绪变化
-
 只输出翻译结果，不要解释，不要添加任何多余文字。"""
 }
 
-# --- 获取前文函数 ---
+# --- 获取前文函数（保持不变）---
 def get_recent_context(pos, context_sentences=65):
     start = max(0, pos - context_sentences)
     context_lines = []
@@ -84,21 +80,18 @@ def get_recent_context(pos, context_sentences=65):
         trans = data_dict.get(k, "")
         if trans and trans.strip() and trans.strip() != k.strip() and len(trans.strip()) >= 5:
             context_lines.append(f"原文: {k}\n翻译: {trans}")
-
     context_count = len(context_lines)
     print(f"[上下文] 当前位置: {pos} | 使用前 {context_count} 句已翻译内容作为参考")
-
     if context_lines:
         return "【前文参考（请严格保持相同风格、语气和色气程度）】\n" + "\n\n".join(context_lines) + "\n\n【当前待翻译内容】\n"
     return "【当前待翻译内容】\n"
 
-
-# --- 主循环 ---
+# --- 主循环（保持不变）---
 idx = 0
 while idx < total:
     current_pos, current_key = todo_list[idx]
     current_batch = []
-    
+   
     for j in range(BATCH_SIZE):
         if idx + j >= total:
             break
@@ -122,15 +115,16 @@ while idx < total:
             },
             timeout=300
         )
-
         response.raise_for_status()
         ai_reply = response.json()["choices"][0]["message"]["content"].strip()
+
         translated_lines = [line.strip() for line in ai_reply.split('\n') if line.strip()]
 
         if len(translated_lines) == len(current_batch):
             for k, res in zip(current_batch, translated_lines):
                 data_dict[k] = res
 
+            # 保存
             with open("ManualTransFile.json", 'w', encoding='utf-8') as f:
                 json.dump(data_dict, f, ensure_ascii=False, indent=4)
 
@@ -139,6 +133,7 @@ while idx < total:
             print(f"[总进度] {start_pos + idx} / {len(data_dict)}")
         else:
             print(f"[错误] 行数不匹配 (期望{len(current_batch)}, 实际{len(translated_lines)})")
+            time.sleep(5)
 
     except Exception as e:
         print(f"[异常] 请求失败: {e}")
