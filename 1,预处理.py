@@ -1,27 +1,39 @@
 import json
 import re
 
-# 日语字符范围
 jp_pattern = re.compile(r'[\u3040-\u30FF\u4E00-\u9FFF]')
+
+remove_keys = {
+    "子丑寅卯辰巳午未申酉戌亥",
+    "甲乙丙丁戊己庚辛壬癸",
+    "零一二三四五六七八九",
+    "十百千萬",
+    "負",
+    "零壹貳參肆伍陸柒捌玖",
+    "拾佰仟萬",
+    "负",
+    "零壹贰叁肆伍陆柒捌玖",
+    "十百千万",
+    "マイナス",
+    "零壱弐参四伍六七八九",
+    "拾百千万",
+    "零壹貳參四五六七八九",
+    "拾百千",
+    "〇一二三四五六七八九",
+    "日本語",
+    "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑをん",
+    "いろはにほへとちりぬるをわかよたれそつねならむうゐのおくやまけふこえてあさきゆめみしゑひもせす",
+    "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヰヱヲン",
+    "イロハニホヘトチリヌルヲワカヨタレソツネナラムウヰノオクヤマケフコエテアサキユメミシヱヒモセス"
+}
 
 with open('ManualTransFile.json', 'r', encoding='utf-8') as f:
     data = json.load(f)
-
-with open('其他文件/剔除.json', 'r', encoding='utf-8') as f:
-    remove_data = json.load(f)
-
-remove_keys = set(remove_data.keys())
-
-def jp_ratio(text):
-    jp_count = sum(1 for c in text if jp_pattern.match(c))
-    return jp_count / len(text) if text else 0
 
 filtered_items = [
     (k, v) for k, v in data.items()
     if jp_pattern.search(k) and k not in remove_keys
 ]
-
-filtered_items.sort(key=lambda item: jp_ratio(item[0]), reverse=True)
 
 sorted_data = dict(filtered_items)
 
