@@ -3,7 +3,7 @@ import os
 import time
 import traceback
 from llama_cpp import Llama
-jsonpath="/content/drive/MyDrive/ManualTransFile.json"
+jsonpath="ManualTransFile.json"
 # --- 加载模型 ---
 print("[启动] 正在加载模型...")
 llm = Llama(
