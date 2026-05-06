@@ -20,3 +20,6 @@
 ### 注意事项 ⚠️
 - 项目仍在测试，如遇 bug 欢迎提交 Issue 🐛
 - 暂不支持本地运行
+
+
+pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
