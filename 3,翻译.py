@@ -1,5 +1,4 @@
 import json
-import os
 import time
 import traceback
 from llama_cpp import Llama
@@ -7,7 +6,7 @@ jsonpath="ManualTransFile.json"
 # --- 加载模型 ---
 print("[启动] 正在加载模型...")
 llm = Llama(
-    model_path="gemma-4-26B-A4B-it-UD-Q3_K_XL.gguf",
+    model_path="gemma-4-26B-A4B-it-UD-Q3_K_XL.gguf",# 16G显存推荐,下载地址: https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/gemma-4-26B-A4B-it-UD-Q3_K_XL.gguf
     n_ctx=4096,
     n_threads=8,
     n_gpu_layers=-1,
@@ -16,8 +15,8 @@ llm = Llama(
 print("[完成] 模型加载成功")
 
 # --- 配置 ---
-BATCH_SIZE = 10
-CONTEXT_SENTENCES = 35
+BATCH_SIZE = 10 # 每次翻译10句
+CONTEXT_SENTENCES = 35 # 最多参考35句
 
 # --- 读取 JSON ---
 print("[读取] 正在加载 JSON...")
