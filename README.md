@@ -1,6 +1,6 @@
 # ColabGameTranslate 🎮✨
 
-本工具基于 Mtool 生成的 `ManualTransFile.json` 进行翻译管理，支持旧版本翻译自动同步，大幅减少重复工作量 😊。
+本工具基于 Mtool 生成的 `ManualTransFile.json` 进行翻译管理，使用LLM进行翻译,支持上下文参考😊。
 
 ## 特性 🌟
 
